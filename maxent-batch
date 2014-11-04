@@ -1,2 +1,135 @@
-hmm, this doesn't look quite right ...
-can't edit in this box?
+#!/bin/bash
+
+## ----- maxent-batch ---------------------------------------------------------
+##
+## This script enables maxent models to be run in batches. Ordinarily, users
+## should not have to edit anything here. Variables are assigned in individual 
+## configuration files passed in via the command line, eg:
+## 
+##   maxent-batch <maxent-run-name>.conf
+##
+##
+## ----- obtain config --------------------------------------------------------
+
+if [[ ! -e $1 ]]; then
+    echo "Config file \"$1\" does not exist!"
+    exit
+fi
+
+config=$1
+source $config
+
+## derive run name from configuration file name
+fname=${config##*/}   ## truncate path, if exists
+ext=${fname##*.}      ## return dot separated file extension
+run=${fname%%.$ext}   ## prefix to dot separated extension
+
+echo ${run}
+
+
+## ----- maxent run script ----------------------------------------------------
+
+for model in $models; do 
+    for slice in $slices; do
+
+	mkdir -p tmp/environment tmp/projections
+
+	if [[ -e ${env}/${DEM} ]]; then ## elevation variable input
+	    tgt=${DEM}
+	    link="${env}/${tgt} tmp/environment/${tgt}"
+	    echo creating link $link
+	    ln -s $link
+	    link="${env}/${tgt} tmp/projections/${tgt}"
+	    echo creating link $link
+	    ln -s $link
+	fi
+
+
+	## for maxent runs requiring monthly input variables
+	## specific months (1-13) come from config file $months
+	if [[ ${months} != '' ]]; then
+
+	    echo "Processing monthly variables ..."
+
+	    for i in $months; do ## for specified months
+
+		if [[ ${i} -lt 10 ]]; then i=0${i}; fi
+
+		for j in $mvars; do ## and specified variables
+
+		    if [[ ${j} -lt 10 ]]; then j=0${j}; fi
+
+		    tgt=${envprefix}_s${j}m${i}.asc ## create target
+
+		    link="${env}/month/${tgt} tmp/environment/${tgt}"
+		    echo creating link $link
+		    ln -s $link ## link to monthly environment file
+		
+		    link="${proj}/month/${model}_${slice}_s${j}m${i}.asc \
+		           tmp/projections/${tgt}"
+		    echo creating link $link
+		    ln -s $link ## link to monthly projection file
+		done
+	done
+	    
+	    ## identify output directory 
+	    out=output/${run}_month/${envprefix}_${model}_${slice}_m
+
+	    for m in ${months}; do out=${out}${m}; done
+
+	    echo $out
+
+      if [[ ! -d ${out} ]]; then 
+        mkdir -p ${out}
+		    call="java -jar $jarfile -e tmp/environment \
+                                 -s $obs \
+                                 -j tmp/projections \
+                                 -o $out $switches"  
+		    echo $call
+		    $call
+	    fi
+	    
+	    rm -rf tmp/environment/${envprefix}_s*m* \
+		         tmp/projections/${envprefix}_s*m*
+
+	fi ## end monthly variables
+
+
+	echo "Processing BIOCLIM variables ..."
+
+	for i in $vars; do ## begin bioclim variable input
+
+
+	    if [[ ${i} -lt 10 ]]; then i=0${i}; fi 
+
+	    tgt=${envprefix}_p${i}.asc
+
+	    link="${env}/${tgt} tmp/environment/${tgt}"
+	    echo creating link $link
+	    ln -s $link
+
+	    link="${proj}/${model}_${slice}_p${i}.asc tmp/projections/${tgt}"
+	    echo creating link $link
+	    ln -s $link
+
+	done
+
+	## identify output directory; maxent runs if this does not exist 
+	out=output/${run}/${envprefix}_${model}_${slice}
+
+	if [[ ! -d ${out} ]]; then 
+	    mkdir -p ${out}
+	    call="java -jar $jarfile -e tmp/environment \
+                               -s $obs \
+                               -j tmp/projections \
+                               -o $out $switches"  
+	    echo $call
+           $call
+	fi
+	rm -rf tmp
+     done
+ done
+
+exit
+
+## ----- eof ------------------------------------------------------------------
