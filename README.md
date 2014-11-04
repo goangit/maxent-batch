@@ -3,4 +3,4 @@ maxent-batch
 
 Enable MaxEnt Ensembles
 
-By default MaxEnt takes point location observed data and gridded environmental data. When running against climate model outputs the tpical se-case iso run one MaxEnt configuration, with one set of species observations against an ensemble of clmate modl dived enivirnmental outputs. These scripts enable that use-case.
+By default MaxEnt takes point location observations of species presence/absence and gridded data reflecting status of environmental variables (eg Bioclim variables). When running against climate model outputs the tpical use-case is to run one MaxEnt configuration against an ensemble of climate model derived environmental variables, creating an ensemble of MaxEnt models. These scripts enable that use-case.
