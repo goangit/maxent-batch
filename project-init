@@ -1,0 +1,41 @@
+#!/bin/bash
+
+root=`pwd`
+
+for i in {1..3}
+do
+    if [[ $i < 10 ]]; then i=0$i; fi
+
+    dir=project${i}/environment
+    mkdir -p ${dir}
+    cd ${dir}
+    touch env-a.asc env-b.asc env-c.asc
+    cd ${root}
+
+    dir=project${i}/projections/1980-2009
+    mkdir -p ${dir}
+    cd ${dir}
+    touch proj-a.asc proj-b.asc proj-c.asc
+    cd ${root}
+
+    dir=project${i}/projections/2010-2039
+    mkdir -p ${dir}
+    cd ${dir}
+    touch proj-a.asc proj-b.asc proj-c.asc
+    cd ${root}
+
+    dir=project${i}/projections/2040-2069
+    mkdir -p ${dir}
+    cd ${dir}
+    touch proj-a.asc proj-b.asc proj-c.asc
+    cd ${root}
+
+    dir=project${i}/projections/2070-2100
+    mkdir -p ${dir}
+    cd ${dir}
+    touch proj-a.asc proj-b.asc proj-c.asc
+    cd ${root}
+
+done
+
+exit
